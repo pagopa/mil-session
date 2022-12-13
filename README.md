@@ -1,4 +1,4 @@
-# Multi-channel Integration Layer Session
+# Multi-channel Integration Layer - Session
 Session management for Multi-channel Integration Layer of SW Client Project.
 
 ## Dependencies

@@ -14,7 +14,7 @@ public class SaveNewCardsResponse {
 
 	@Override
 	public String toString() {
-		return "SaveNewCards [saveNewCards=" + saveNewCards + "]";
+		return "SaveNewCardsResponse [saveNewCards=" + saveNewCards + "]";
 	}
 	
 }

@@ -1,9 +1,9 @@
 package it.gov.pagopa.swclient.mil.session.bean;
 
-public class TermsAndConditionsResponse {
-
-	private String outcome;
+public class PatchSessionResponse {
 	
+	private String outcome;
+
 	public String getOutcome() {
 		return outcome;
 	}
@@ -14,7 +14,7 @@ public class TermsAndConditionsResponse {
 
 	@Override
 	public String toString() {
-		return "TermsAndConditionsResponse [outcome=" + outcome + "]";
+		return "PatchSessionResponse [outcome=" + outcome + "]";
 	}
 	
 }

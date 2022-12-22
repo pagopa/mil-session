@@ -6,6 +6,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
+import it.gov.pagopa.swclient.mil.session.bean.GetTaxCodeResponse;
 import org.eclipse.microprofile.rest.client.annotation.ClientHeaderParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -18,8 +19,13 @@ public interface PMWalletService {
 	
 	@GET
 	@Path("/enabledServices/{taxCode}/saveNewCards")
-	@ClientHeaderParam(name = "Version", value = "${pmwallet-api.savenewcards.version}") 
+	@ClientHeaderParam(name = "Version", value = "${pmwallet-api.get-savenewcards.version}")
     Uni<SaveNewCardsResponse> getSaveNewCards(@PathParam("taxCode") String taxCode);
+
+	@GET
+	@Path("/cards/{panToken}/taxCode")
+	@ClientHeaderParam(name = "Version", value = "${pmwallet-api.post-cards.version}")
+	Uni<GetTaxCodeResponse> getTaxCode(@PathParam("panToken") String panToken);
 	
 	@POST
 	@Path("/cards")

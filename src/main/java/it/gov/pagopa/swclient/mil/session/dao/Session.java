@@ -4,7 +4,7 @@ public class Session {
 
 	private String taxCode;
 	private boolean termsAndConditionAccepted;
-	private boolean saveNewCards;
+	private Boolean saveNewCards;
 	
 	public String getTaxCode() {
 		return taxCode;
@@ -18,10 +18,10 @@ public class Session {
 	public void setTermsAndConditionAccepted(boolean termsAndConditionAccepted) {
 		this.termsAndConditionAccepted = termsAndConditionAccepted;
 	}
-	public boolean isSaveNewCards() {
+	public Boolean isSaveNewCards() {
 		return saveNewCards;
 	}
-	public void setSaveNewCards(boolean saveNewCards) {
+	public void setSaveNewCards(Boolean saveNewCards) {
 		this.saveNewCards = saveNewCards;
 	}
 	

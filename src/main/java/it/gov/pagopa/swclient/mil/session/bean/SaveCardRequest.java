@@ -20,7 +20,7 @@ public class SaveCardRequest {
 	
 	@Override
 	public String toString() {
-		return "Card [panToken=" + panToken + ", taxCode=" + taxCode + "]";
+		return "SaveCardRequest [panToken=" + panToken + ", taxCode=" + taxCode + "]";
 	}
 	
 }

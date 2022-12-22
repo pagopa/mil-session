@@ -3,16 +3,15 @@ package it.gov.pagopa.swclient.mil.session.bean;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-public class InitSessionResponse {
+public class GetSessionResponse {
 	
 	private String outcome;
-	
+
+	private String taxCode;
+
 	@JsonInclude(Include.NON_NULL)
 	private Boolean saveNewCards;
-	
-	@JsonInclude(Include.NON_NULL)
-	private String pairingToken;
-	
+
 	public String getOutcome() {
 		return outcome;
 	}
@@ -29,18 +28,19 @@ public class InitSessionResponse {
 		this.saveNewCards = saveNewCards;
 	}
 
-	public String getPairingToken() {
-		return pairingToken;
+	public String getTaxCode() {
+		return taxCode;
 	}
 
-	public void setPairingToken(String pairingToken) {
-		this.pairingToken = pairingToken;
+	public void setTaxCode(String taxCode) {
+		this.taxCode = taxCode;
 	}
 
 	@Override
 	public String toString() {
-		return "InitSessionResponse [outcome=" + outcome + ", saveNewCards=" + saveNewCards + ", pairingToken="
-				+ pairingToken + "]";
+		return "GetSessionResponse [outcome=" + outcome + ", taxCode=" + taxCode + ", saveNewCards=" + saveNewCards
+				+ "]";
 	}
+
 	
 }

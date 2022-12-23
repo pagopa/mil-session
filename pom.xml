@@ -5,7 +5,7 @@
 	
 	<groupId>it.gov.pagopa.swclient.mil</groupId>
 	<artifactId>session</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.2-SNAPSHOT</version>
 	
 	<description>Session management for Multi-channel Integration Layer of SW Client Project</description>
 	
@@ -23,7 +23,7 @@
 		
 		<quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
 		<quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-		<quarkus.platform.version>2.14.3.Final</quarkus.platform.version>
+		<quarkus.platform.version>2.15.0.Final</quarkus.platform.version>
 		
 		<skipITs>true</skipITs>
 		
@@ -66,6 +66,15 @@
 		<dependency>
 			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-resteasy-reactive</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-rest-client-reactive</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>it.gov.pagopa.swclient.mil</groupId>
+			<artifactId>common</artifactId>
+			<version>${common.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.quarkus</groupId>
@@ -196,5 +205,38 @@
 				<quarkus.package.type>native</quarkus.package.type>
 			</properties>
 		</profile>
+	
+		<profile>
+			<id>coverage</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>0.8.8</version>
+						<executions>
+							<execution>
+								<id>prepare-agent</id>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>report</id>
+								<goals>
+									<goal>report</goal>
+								</goals>
+								<configuration>
+									<formats>
+										<format>XML</format>
+									</formats>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		
 	</profiles>
 </project>

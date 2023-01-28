@@ -7,8 +7,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.gov.pagopa.swclient.mil.bean.CommonHeader;
+import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.bean.GetTaxCodeResponse;
-import it.gov.pagopa.swclient.mil.session.bean.InitSessionRequest;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
 import it.gov.pagopa.swclient.mil.session.bean.SaveCardRequest;
 import it.gov.pagopa.swclient.mil.session.bean.SaveNewCardsResponse;
@@ -24,8 +24,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
-
-import javax.ws.rs.NotFoundException;
 
 import static io.restassured.RestAssured.given;
 
@@ -71,7 +69,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_201_accepted_saveCards() {
 		
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();
@@ -126,7 +124,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_201_accepted_notSaveCards() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_LUIGI_ROSSI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();
@@ -177,7 +175,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_201_notAccepted() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_VERDI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();
@@ -222,7 +220,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_400_validation() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken("ABC$DE");
 
 		Response response = given()
@@ -252,7 +250,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_500_integrationError_getTaxCode() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		Mockito
@@ -286,12 +284,12 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_204_getTaxCode_notFound() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		Mockito
 				.when(pmWalletService.getTaxCode(PAN_MARIO_ROSSI))
-				.thenReturn(Uni.createFrom().failure(() -> new NotFoundException()));
+				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException(404)));
 
 		Response response = given()
 				.contentType(ContentType.JSON)
@@ -323,7 +321,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_500_integrationError_termsAndConditions() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();
@@ -364,7 +362,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_201_notFound_termsAndConditions() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();
@@ -376,7 +374,7 @@ class SessionsResourcePanTokenTest {
 
 		Mockito
 				.when(termsAndCondsService.getTCByTaxCode(Mockito.anyString(), Mockito.any(CommonHeader.class)))
-				.thenReturn(Uni.createFrom().failure(() -> new NotFoundException()));
+				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException(404)));
 
 		Response response = given()
 				.contentType(ContentType.JSON)
@@ -404,7 +402,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_201_integrationError_getSaveNewCards() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();
@@ -450,7 +448,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_201_integrationError_saveCard() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();
@@ -504,7 +502,7 @@ class SessionsResourcePanTokenTest {
 	@Test
 	void testInitSession_panToken_500_integrationError_saveSession() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setPanToken(PAN_MARIO_ROSSI);
 
 		GetTaxCodeResponse getTaxCodeResponse = new GetTaxCodeResponse();

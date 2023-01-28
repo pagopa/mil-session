@@ -1,0 +1,9 @@
+{
+    "request": {
+        "method": "POST",
+        "url": "/cards"
+    },
+    "response": {
+        "status": 500
+    }
+}

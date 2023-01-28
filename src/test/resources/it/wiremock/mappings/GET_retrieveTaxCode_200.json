@@ -1,0 +1,28 @@
+{
+    "priority": 1,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/cards/(a.*)/taxCode"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "transformers": ["response-template"],
+        "transformerParameters": {
+            "panTokenMapping": {
+                "a5069caab6a149008426508e1a966eeb": "RSSMRA80A01H501U",
+                "a45491567e11431daec441e4f4a3c157": "RSSLGU80A01H501U",
+                "ab64da842a334d8e9e7c6c7d2fd706e3": "VRDMRA80A01H501Q",
+                "a358c16d12114ae89f4c504818185c2a": "VRDLGU80A01H501Q",
+                "a6ea9a71c04c459694a1b9d239fa59fc": "RSSGNN80A01H501N",
+                "a2c52680f72745978ed2e991a86d86dd": "BNCMRA80A01H501A",
+                "a5430e624c4a46c2a0953c770019b97e": "RSSMRA80A41H501Y"
+            }
+        },
+        "jsonBody": {
+            "taxCode": "{{lookup parameters.panTokenMapping request.pathSegments.[1]}}"
+        }
+    }
+}

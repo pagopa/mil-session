@@ -1,0 +1,14 @@
+{
+    "request": {
+        "method": "POST",
+        "url": "/cards",
+        "bodyPatterns" : [
+            {
+                "matchesJsonPath" : "$[?(@.panToken == 'a5069caab6a149008426508e1a966eeb')]"
+            }
+        ]
+    },
+    "response": {
+        "status": 204
+    }
+}

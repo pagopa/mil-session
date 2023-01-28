@@ -1,0 +1,10 @@
+{
+    "priority": 2,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/cards/(z.*)/taxCode"
+    },
+    "response": {
+        "status": 500
+    }
+}

@@ -2,7 +2,7 @@
     "priority": 2,
     "request": {
         "method": "GET",
-        "urlPathPattern": "/enabledServices/RSSMRA80A01H501U/saveNewCards"
+        "urlPathPattern": "/enabledServices/(RSSM.*)/saveNewCards"
     },
     "response": {
         "status": 200,

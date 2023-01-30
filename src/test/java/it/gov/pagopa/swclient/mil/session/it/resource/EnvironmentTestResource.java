@@ -11,7 +11,12 @@ public class EnvironmentTestResource implements QuarkusTestResourceLifecycleMana
     public Map<String, String> start() {
         return ImmutableMap.of(
                 "session.quarkus-log-level", "DEBUG",
-                "session.app-log-level", "DEBUG"
+                "session.app-log-level", "DEBUG",
+                // reactive test client timeout
+                "mil.tc.service.read-timeout", "3000",
+                "mil.tc.service.connect-timeout", "3000",
+                "pmwallet.service.read-timeout", "3000",
+                "pmwallet.service.connect-timeout", "3000"
         );
     }
 

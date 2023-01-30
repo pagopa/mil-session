@@ -1,5 +1,8 @@
 package it.gov.pagopa.swclient.mil.session.dao;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 public class Session {
 
 	private String taxCode;

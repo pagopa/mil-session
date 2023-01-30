@@ -112,6 +112,12 @@
             <artifactId>testcontainers</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>4.3.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

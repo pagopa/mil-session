@@ -1,0 +1,11 @@
+{
+    "priority": 100,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/acceptedTermsConds/BNCMRA80A41H501E"
+    },
+    "response": {
+        "status": 404,
+        "fixedDelayMilliseconds": 5000
+    }
+}

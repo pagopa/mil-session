@@ -9,12 +9,13 @@ import it.gov.pagopa.swclient.mil.session.ErrorCode;
 import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.bean.CreateSessionResponse;
 import it.gov.pagopa.swclient.mil.session.bean.GetSessionResponse;
-import it.gov.pagopa.swclient.mil.session.bean.GetTaxCodeResponse;
+import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionRequest;
+import it.gov.pagopa.swclient.mil.session.bean.pmwallet.RetrieveTaxCodeResponse;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
-import it.gov.pagopa.swclient.mil.session.bean.PatchSessionResponse;
-import it.gov.pagopa.swclient.mil.session.bean.SaveCardRequest;
-import it.gov.pagopa.swclient.mil.session.bean.SaveNewCardsResponse;
-import it.gov.pagopa.swclient.mil.session.bean.TermsAndConditionsResponse;
+import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionResponse;
+import it.gov.pagopa.swclient.mil.session.bean.pmwallet.PresaveRequest;
+import it.gov.pagopa.swclient.mil.session.bean.pmwallet.GetSaveNewCardsFlagRequest;
+import it.gov.pagopa.swclient.mil.session.bean.termsandconds.CheckResponse;
 import it.gov.pagopa.swclient.mil.session.client.PMWalletService;
 import it.gov.pagopa.swclient.mil.session.client.TermsAndConditionsService;
 import it.gov.pagopa.swclient.mil.session.dao.Session;
@@ -88,8 +89,8 @@ public class SessionsResource {
 				.onItem().ifNull().switchTo(() -> {
 					// if the tokenized pan is passed in request, retrieve tax code from PM wallet
 					Log.debugf("Calling PMWallet - retrieve Tax Code by PAN token - Input parameters: panToken=%s", createSessionRequest.getPanToken());
-					return pmWalletService.getTaxCode(createSessionRequest.getPanToken())
-							.onFailure(t -> (t instanceof ClientWebApplicationException exc) && exc.getResponse().getStatus() == 404).recoverWithItem(new GetTaxCodeResponse())
+					return pmWalletService.retrieveTaxCode(createSessionRequest.getPanToken())
+							.onFailure(t -> (t instanceof ClientWebApplicationException exc) && exc.getResponse().getStatus() == 404).recoverWithItem(new RetrieveTaxCodeResponse())
 							.onFailure().transform(t -> {
 								Log.errorf(t, "[%s] Error while retrieving taxCode from PM wallet", ErrorCode.ERROR_CALLING_GET_TAX_CODE_SERVICE);
 								return new InternalServerErrorException(Response
@@ -97,7 +98,7 @@ public class SessionsResource {
 										.entity(new Errors(List.of(ErrorCode.ERROR_CALLING_GET_TAX_CODE_SERVICE)))
 										.build());
 							})
-							.map(GetTaxCodeResponse::getTaxCode);
+							.map(RetrieveTaxCodeResponse::getTaxCode);
 				})
 				.chain(taxCode -> {
 					if (taxCode == null) {
@@ -150,13 +151,13 @@ public class SessionsResource {
 				.chain(cResponse -> {
 					// retrieve terms and condition acceptance status from termsandconds service
 					Log.debugf("Calling MIL - retrieve terms and condition acceptance - Input parameters: taxCode=%s", cResponse.context().get(CONTEXT_TAX_CODE).toString());
-					return termsAndConsService.getTCByTaxCode(cResponse.context().get(CONTEXT_TAX_CODE), commonHeader)
+					return termsAndConsService.check(cResponse.context().get(CONTEXT_TAX_CODE), commonHeader)
 							.onFailure(t -> (t instanceof ClientWebApplicationException exc) && exc.getResponse().getStatus() == 404).recoverWithItem(() -> {
 								// if 404 recover with TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED
 								Log.debugf("Calling MIL - retrieve terms and condition acceptance returned 404, recovering with %s", Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString());
-								TermsAndConditionsResponse termsAndConditionsResponse = new TermsAndConditionsResponse();
-								termsAndConditionsResponse.setOutcome(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString());
-								return termsAndConditionsResponse;
+								CheckResponse tcCheckResponse = new CheckResponse();
+								tcCheckResponse.setOutcome(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString());
+								return tcCheckResponse;
 							})
 							.onFailure().transform(t -> {
 								Log.errorf(t, "[%s] Error while retrieving terms and condition", ErrorCode.ERROR_CALLING_TERMS_AND_CONDITIONS_SERVICE);
@@ -216,12 +217,12 @@ public class SessionsResource {
 						// retrieve saveNewCards flag from the PM wallet
 						Log.debugf("Calling PMWallet - retrieve saveNewCard flag - Input parameters: taxCode=%s", cResponse.context().get(CONTEXT_TAX_CODE).toString());
 						return pmWalletService
-								.getSaveNewCards(cResponse.context().get(CONTEXT_TAX_CODE))
+								.getSaveNewCardsFlag(cResponse.context().get(CONTEXT_TAX_CODE))
 								.onFailure().recoverWithItem(t -> {
 									Log.errorf(t, "[%s] Error while retrieving save new cards flag", ErrorCode.ERROR_CALLING_GET_SAVE_NEW_CARDS_SERVICE);
 									// if there is an error in the integration with the service we don't block
 									// and return the saveNewCard flag to false
-									return new SaveNewCardsResponse();
+									return new GetSaveNewCardsFlagRequest();
 								})
 								.map(snc -> {
 									// store the saveNewCard flag in the context
@@ -241,11 +242,11 @@ public class SessionsResource {
 						// we use call instead of chain because we don't
 						if (createSessionRequest.getPanToken() != null &&
 								(Boolean) cResponse.context().get(CONTEXT_SAVE_NEW_CARDS)) {
-							SaveCardRequest card = new SaveCardRequest();
+							PresaveRequest card = new PresaveRequest();
 							card.setPanToken(createSessionRequest.getPanToken());
 							card.setTaxCode(cResponse.context().get(CONTEXT_TAX_CODE));
 							Log.debugf("Calling PMWallet - saving new card - Input parameters: %s", card);
-							return pmWalletService.saveCard(card)
+							return pmWalletService.presave(card)
 									.onFailure().recoverWithItem(t -> {
 										Log.errorf(t, "[%s] Error while saving card in wallet", ErrorCode.ERROR_CALLING_SAVE_CARD_SERVICE);
 										return Response.ok().build();
@@ -262,18 +263,18 @@ public class SessionsResource {
 	}
 
 	/**
-	 *
+	 * Retrieve a session by its session id
 	 * @param commonHeader a set of mandatory headers
 	 * @param sessionId the identifier of the session
-	 * @return
+	 * @return a {@link Session} containing the session information or 404 if not found
 	 */
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{id}")
-	public Uni<Response> getSession(@Valid @BeanParam CommonHeader commonHeader,
+	public Uni<Response> getSessionById(@Valid @BeanParam CommonHeader commonHeader,
 									@Pattern(regexp = SESSION_ID_REGEX, message = "[" + ErrorCode.SESSION_ID_MUST_MATCH_REGEXP + "] session id must match \"{regexp}\"")
 									@PathParam(value = "id") String sessionId) {
-		Log.debugf("getSession - Input parameters: %s sessionId [%s]", commonHeader, sessionId);
+		Log.debugf("getSessionById - Input parameters: %s sessionId [%s]", commonHeader, sessionId);
 
 		return retrieveSession(sessionId)
 			.map(e -> {
@@ -282,32 +283,32 @@ public class SessionsResource {
 						Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString());
 				response.setTaxCode(e.getTaxCode());
 				response.setSaveNewCards(e.isSaveNewCards());
-				Log.debugf("getSession - Output parameters: %s", response);
+				Log.debugf("getSessionById - Output parameters: %s", response);
 				return Response.ok(response).build();
 			});
 	}
 
 	/**
-	 *
+	 * Updates the termsAndCondsAccepted and saveNewCards value of an existing session
 	 * @param commonHeader a set of mandatory headers
 	 * @param sessionId the identifier of the session
-	 * @param sessionDataToUpdate
-	 * @return
+	 * @param updateSessionRequest
+	 * @return a {@link UpdateSessionResponse} containing the outcome of the successful update or 404 if not found
 	 */
 	@PATCH
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Uni<Response> patchSession(@Valid @BeanParam CommonHeader commonHeader,
+	public Uni<Response> updateSessionById(@Valid @BeanParam CommonHeader commonHeader,
 									  @Pattern(regexp = SESSION_ID_REGEX, message = "[" + ErrorCode.SESSION_ID_MUST_MATCH_REGEXP + "] session id must match \"{regexp}\"")
 									  @PathParam(value = "id") String sessionId,
-									  Session sessionDataToUpdate) {
-		Log.debugf("patchSession - Input parameters: %s sessionId [%s] %s", commonHeader, sessionId, sessionDataToUpdate);
+									  UpdateSessionRequest updateSessionRequest) {
+		Log.debugf("updateSessionById - Input parameters: %s sessionId [%s] %s", commonHeader, sessionId, updateSessionRequest);
 
 		return retrieveSession(sessionId)
 			.chain(currentSession -> {
-				currentSession.setTermsAndConditionAccepted(sessionDataToUpdate.isTermsAndConditionAccepted());
-				currentSession.setSaveNewCards(sessionDataToUpdate.isTermsAndConditionAccepted());
+				currentSession.setTermsAndConditionAccepted(updateSessionRequest.isTermsAndCondsAccepted());
+				currentSession.setSaveNewCards(updateSessionRequest.isSaveNewCards());
 				return sessionService.set(sessionId, currentSession)
 						.onFailure().transform(t -> {
 							Log.errorf(t, "[%s] REDIS error saving session in cache", ErrorCode.REDIS_ERROR_WHILE_SAVING_SESSION);
@@ -317,17 +318,16 @@ public class SessionsResource {
 									.build());
 						})
 						.map(c -> {
-							URI location = URI.create("/services/" + sessionId);
-							PatchSessionResponse patchSessionResponse = new PatchSessionResponse();
-							patchSessionResponse.setOutcome("ACCEPTED");
-							Log.debugf("patchSession - Output parameters: %s, %s", location, patchSessionResponse);
-							return Response.accepted(patchSessionResponse).build();
+							UpdateSessionResponse updateSessionResponse = new UpdateSessionResponse();
+							updateSessionResponse.setOutcome("ACCEPTED");
+							Log.debugf("updateSessionById - Output parameters: %s", updateSessionResponse);
+							return Response.accepted(updateSessionResponse).build();
 						});
 			});
 	}
 
 	/**
-	 *
+	 * Delete an existing session by its session id
 	 * @param commonHeader a set of mandatory headers
 	 * @param sessionId the identifier of the session
 	 * @return
@@ -335,10 +335,10 @@ public class SessionsResource {
 	@DELETE
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Uni<Response> deleteSession(@Valid @BeanParam CommonHeader commonHeader,
+	public Uni<Response> deleteSessionById(@Valid @BeanParam CommonHeader commonHeader,
 									   @Pattern(regexp = SESSION_ID_REGEX, message = "[" + ErrorCode.SESSION_ID_MUST_MATCH_REGEXP + "] session id must match \"{regexp}\"")
 									   @PathParam(value = "id") String sessionId) {
-		Log.debugf("deleteSession - Input parameters: %s sessionId [%s]", commonHeader, sessionId);
+		Log.debugf("deleteSessionById - Input parameters: %s sessionId [%s]", commonHeader, sessionId);
 
 		return sessionService.getdel(sessionId)
 			.onFailure().transform(t -> {
@@ -356,7 +356,7 @@ public class SessionsResource {
 						.build());
 			})
 			.map(e -> {
-				Log.debugf("deleteSession - Output parameters: %s", e);
+				Log.debugf("deleteSessionById - Output parameters: %s", e);
 				return Response.noContent().build();
 			});
 	}

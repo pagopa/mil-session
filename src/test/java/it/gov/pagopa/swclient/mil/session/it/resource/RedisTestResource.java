@@ -34,6 +34,7 @@ public class RedisTestResource implements QuarkusTestResourceLifecycleManager, D
 
         // Start the needed container(s)
         redisContainer = new GenericContainer(DockerImageName.parse("redis:latest"))
+                .withExposedPorts(6379)
                 .withNetwork(getNetwork())
                 .withNetworkAliases(REDIS_NETWORK_ALIAS)
                 //.withNetworkMode(devServicesContext.containerNetworkId().get())
@@ -44,6 +45,8 @@ public class RedisTestResource implements QuarkusTestResourceLifecycleManager, D
         redisContainer.start();
 
         final String redisEndpoint = "redis://" + REDIS_NETWORK_ALIAS + ":" + 6379;
+        final Integer exposedPort = redisContainer.getMappedPort(6379);
+        devServicesContext.devServicesProperties().put("test.redis.exposed-port", exposedPort.toString());
 
         // Pass the configuration to the application under test
         return ImmutableMap.of(

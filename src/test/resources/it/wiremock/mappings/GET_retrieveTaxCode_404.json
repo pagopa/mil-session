@@ -1,5 +1,5 @@
 {
-    "priority": 3,
+    "priority": 100,
     "request": {
         "method": "GET",
         "urlPathPattern": "/cards/(.*)/taxCode"

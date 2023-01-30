@@ -9,7 +9,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import io.smallrye.mutiny.Uni;
 import it.gov.pagopa.swclient.mil.bean.CommonHeader;
-import it.gov.pagopa.swclient.mil.session.bean.TermsAndConditionsResponse;
+import it.gov.pagopa.swclient.mil.session.bean.termsandconds.CheckResponse;
 
 @Path("/acceptedTermsConds")
 @RegisterRestClient(configKey = "termsandconditions-api")
@@ -17,6 +17,6 @@ public interface TermsAndConditionsService {
 	
 	@GET
 	@Path("/{taxCode}")
-    Uni<TermsAndConditionsResponse> getTCByTaxCode(@PathParam("taxCode") String taxCode, @BeanParam CommonHeader commonHeader);
+    Uni<CheckResponse> check(@PathParam("taxCode") String taxCode, @BeanParam CommonHeader commonHeader);
 
 }

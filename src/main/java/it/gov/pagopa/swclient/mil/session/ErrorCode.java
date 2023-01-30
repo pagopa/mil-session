@@ -23,6 +23,9 @@ public final class ErrorCode {
 	public static final String REDIS_ERROR_WHILE_DELETING_SESSION = MODULE_ID + "000012";
 	public static final String REDIS_ERROR_SESSION_NOT_FOUND = MODULE_ID + "000013";
 
+	public static final String TERMS_AND_CONDS_ACCEPTED_NULL = MODULE_ID + "000004";
+	public static final String SAVE_NEW_CARD_NULL = MODULE_ID + "000005";
+
 	
 	private ErrorCode() {
 	}

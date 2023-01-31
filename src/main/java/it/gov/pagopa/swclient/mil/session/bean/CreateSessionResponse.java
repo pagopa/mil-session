@@ -2,8 +2,10 @@ package it.gov.pagopa.swclient.mil.session.bean;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
-public class InitSessionResponse {
+@RegisterForReflection
+public class CreateSessionResponse {
 	
 	private String outcome;
 	
@@ -39,7 +41,7 @@ public class InitSessionResponse {
 
 	@Override
 	public String toString() {
-		return "InitSessionResponse [outcome=" + outcome + ", saveNewCards=" + saveNewCards + ", pairingToken="
+		return "CreateSessionResponse [outcome=" + outcome + ", saveNewCards=" + saveNewCards + ", pairingToken="
 				+ pairingToken + "]";
 	}
 	

@@ -1,6 +1,6 @@
-package it.gov.pagopa.swclient.mil.session.bean;
+package it.gov.pagopa.swclient.mil.session.bean.pmwallet;
 
-public class GetTaxCodeResponse {
+public class RetrieveTaxCodeResponse {
 
 	private String taxCode;
 
@@ -14,7 +14,7 @@ public class GetTaxCodeResponse {
 
 	@Override
 	public String toString() {
-		return "GetTaxCodeResponse [taxCode=" + taxCode + "]";
+		return "RetrieveTaxCodeResponse [taxCode=" + taxCode + "]";
 	}
 	
 }

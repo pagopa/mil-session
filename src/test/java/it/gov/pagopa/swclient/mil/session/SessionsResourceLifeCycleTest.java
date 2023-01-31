@@ -7,6 +7,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
+import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.dao.Session;
 import it.gov.pagopa.swclient.mil.session.dao.SessionService;
 import it.gov.pagopa.swclient.mil.session.resource.SessionsResource;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
-import javax.ws.rs.NotFoundException;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -24,11 +24,6 @@ import static io.restassured.RestAssured.given;
 @TestHTTPEndpoint(SessionsResource.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SessionsResourceLifeCycleTest {
-
-    final static String CF_MARIO_ROSSI = "RSSMRA80A01H501U"; // accepted, save cards
-    final static String CF_LUIGI_ROSSI = "RSSLGU80A01H501U"; // accepted, not save cards
-
-    final static String CF_MARIO_VERDI = "VRDMRA80A01H501Q"; // not accepted
 
     @InjectMock
     SessionService sessionService;
@@ -39,7 +34,7 @@ class SessionsResourceLifeCycleTest {
         String sessionId = UUID.randomUUID().toString();
 
         Session session = new Session();
-        session.setTaxCode(CF_MARIO_ROSSI);
+        session.setTaxCode(SessionTestData.CF_MARIO_ROSSI);
         session.setTermsAndConditionAccepted(true);
         session.setSaveNewCards(true);
 
@@ -62,7 +57,7 @@ class SessionsResourceLifeCycleTest {
 
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertEquals(Outcome.OK.toString(), response.jsonPath().getString("outcome"));
-        Assertions.assertEquals(CF_MARIO_ROSSI, response.jsonPath().getString("taxCode"));
+        Assertions.assertEquals(SessionTestData.CF_MARIO_ROSSI, response.jsonPath().getString("taxCode"));
         Assertions.assertEquals(true, response.jsonPath().getBoolean("saveNewCards"));
 
     }
@@ -73,7 +68,7 @@ class SessionsResourceLifeCycleTest {
         String sessionId = UUID.randomUUID().toString();
 
         Session session = new Session();
-        session.setTaxCode(CF_LUIGI_ROSSI);
+        session.setTaxCode(SessionTestData.CF_LUIGI_ROSSI);
         session.setTermsAndConditionAccepted(true);
         session.setSaveNewCards(false);
 
@@ -96,7 +91,7 @@ class SessionsResourceLifeCycleTest {
 
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertEquals(Outcome.OK.toString(), response.jsonPath().getString("outcome"));
-        Assertions.assertEquals(CF_LUIGI_ROSSI, response.jsonPath().getString("taxCode"));
+        Assertions.assertEquals(SessionTestData.CF_LUIGI_ROSSI, response.jsonPath().getString("taxCode"));
         Assertions.assertEquals(false, response.jsonPath().getBoolean("saveNewCards"));
 
     }
@@ -107,7 +102,7 @@ class SessionsResourceLifeCycleTest {
         String sessionId = UUID.randomUUID().toString();
 
         Session session = new Session();
-        session.setTaxCode(CF_MARIO_VERDI);
+        session.setTaxCode(SessionTestData.CF_MARIO_VERDI);
         session.setTermsAndConditionAccepted(false);
 
         Mockito
@@ -129,7 +124,7 @@ class SessionsResourceLifeCycleTest {
 
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertEquals(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString(), response.jsonPath().getString("outcome"));
-        Assertions.assertEquals(CF_MARIO_VERDI, response.jsonPath().getString("taxCode"));
+        Assertions.assertEquals(SessionTestData.CF_MARIO_VERDI, response.jsonPath().getString("taxCode"));
         Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
 
     }
@@ -228,11 +223,11 @@ class SessionsResourceLifeCycleTest {
         String sessionId = UUID.randomUUID().toString();
 
         Session savedSession = new Session();
-        savedSession.setTaxCode(CF_MARIO_VERDI);
+        savedSession.setTaxCode(SessionTestData.CF_MARIO_VERDI);
         savedSession.setTermsAndConditionAccepted(false);
 
-        Session updatedSession = new Session();
-        updatedSession.setTermsAndConditionAccepted(true);
+        UpdateSessionRequest updatedSession = new UpdateSessionRequest();
+        updatedSession.setTermsAndCondsAccepted(Boolean.TRUE);
         updatedSession.setSaveNewCards(Boolean.TRUE);
 
         Mockito
@@ -268,8 +263,8 @@ class SessionsResourceLifeCycleTest {
         String sessionId = UUID.randomUUID().toString();
         sessionId = sessionId.replaceAll("-", "");
 
-        Session updatedSession = new Session();
-        updatedSession.setTermsAndConditionAccepted(true);
+        UpdateSessionRequest updatedSession = new UpdateSessionRequest();
+        updatedSession.setTermsAndCondsAccepted(Boolean.TRUE);
         updatedSession.setSaveNewCards(Boolean.TRUE);
 
         Response response = given()
@@ -301,8 +296,8 @@ class SessionsResourceLifeCycleTest {
 
         String sessionId = UUID.randomUUID().toString();
 
-        Session updatedSession = new Session();
-        updatedSession.setTermsAndConditionAccepted(true);
+        UpdateSessionRequest updatedSession = new UpdateSessionRequest();
+        updatedSession.setTermsAndCondsAccepted(Boolean.TRUE);
         updatedSession.setSaveNewCards(Boolean.TRUE);
 
         Mockito
@@ -338,8 +333,8 @@ class SessionsResourceLifeCycleTest {
 
         String sessionId = UUID.randomUUID().toString();
 
-        Session updatedSession = new Session();
-        updatedSession.setTermsAndConditionAccepted(true);
+        UpdateSessionRequest updatedSession = new UpdateSessionRequest();
+        updatedSession.setTermsAndCondsAccepted(Boolean.TRUE);
         updatedSession.setSaveNewCards(Boolean.TRUE);
 
         Mockito
@@ -375,12 +370,12 @@ class SessionsResourceLifeCycleTest {
 
         String sessionId = UUID.randomUUID().toString();
 
-        Session updatedSession = new Session();
-        updatedSession.setTermsAndConditionAccepted(true);
+        UpdateSessionRequest updatedSession = new UpdateSessionRequest();
+        updatedSession.setTermsAndCondsAccepted(Boolean.TRUE);
         updatedSession.setSaveNewCards(Boolean.TRUE);
 
         Session session = new Session();
-        session.setTaxCode(CF_MARIO_VERDI);
+        session.setTaxCode(SessionTestData.CF_MARIO_VERDI);
         session.setTermsAndConditionAccepted(false);
 
         Mockito
@@ -421,7 +416,7 @@ class SessionsResourceLifeCycleTest {
         String sessionId = UUID.randomUUID().toString();
 
         Session deletedSession = new Session();
-        deletedSession.setTaxCode(CF_MARIO_VERDI);
+        deletedSession.setTaxCode(SessionTestData.CF_MARIO_VERDI);
         deletedSession.setTermsAndConditionAccepted(true);
         deletedSession.setSaveNewCards(Boolean.TRUE);
 

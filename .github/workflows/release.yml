@@ -1,54 +1,97 @@
-name: Build native image
+name: Release a new version
 
 on:
-  workflow_dispatch:
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+  release:
+    if: github.event.pull_request.merged == true
     
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v3
+    runs-on: ubuntu-latest
+    
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
 
-      - name: Set up JDK 17
+    steps:
+      #
+      # Checkout the source code.
+      #
+      - name: Checkout the source code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GIT_PAT }}
+          fetch-depth: 0
+
+      #
+      # Calculation of the new version (dry-run).
+      #
+      - name: Calculation of the new version (dry-run)
+        uses: cycjimmy/semantic-release-action@v3
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          semantic_version: 19
+          branch: main
+          extra_plugins: |
+            @semantic-release/release-notes-generator@10.0.3
+            @semantic-release/git@10.0.1
+          dry_run: true
+
+      #
+      # Setup the JDK.
+      #
+      - name: Setup the JDK
+        if: steps.semantic.outputs.new_release_published == 'true'
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
 
-      - name: Build dependencies with Maven
-        run: mvn clean validate -Pbootstrap
+      #
+      # Update of pom.xml with the new version + Git add + commit + push of the updated pom.xml.
+      #
+      - name: Update of pom.xml with the new version + Git add + commit + push of the updated pom.xml
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }}
+          git config user.name "GitHub Workflow"
+          git config user.email "<>"
+          git add pom.xml
+          git commit -m "pom.xml updated with new version ${{ steps.semantic.outputs.new_release_version }}"
+          git push origin main
 
-      - name: Build ${{ env.IMAGE_NAME }} with Maven
-        run: mvn clean package -Pnative
- 
-      - name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      #
+      # Calculation of the new version (again) with tagging + releasing + etc.
+      #
+      - name: Calculation of the new version (again) with tagging + releasing + etc
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: cycjimmy/semantic-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          semantic_version: 19
+          branch: main
+          extra_plugins: |
+            @semantic-release/release-notes-generator@10.0.3
+            @semantic-release/git@10.0.1
+          dry_run: false
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      #
+      # Build dependencies + Build native image + Docker build + login + push.
+      #
+      - name: Build dependencies + Build native image + Docker build + login + push
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          mvn clean validate -Pbootstrap
+          mvn clean package -Pnative
+          docker build -f src/main/docker/Dockerfile.native-micro -t ghcr.io/${{ github.repository }}:latest -t ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }} .
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push -a ghcr.io/${{ github.repository }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: .
-          push: true
-          file: src/main/docker/Dockerfile.native-micro
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}

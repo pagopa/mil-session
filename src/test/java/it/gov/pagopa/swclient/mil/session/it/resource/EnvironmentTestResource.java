@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class EnvironmentTestResource implements QuarkusTestResourceLifecycleManager {
 
@@ -16,7 +17,9 @@ public class EnvironmentTestResource implements QuarkusTestResourceLifecycleMana
                 "mil.tc.service.read-timeout", "3000",
                 "mil.tc.service.connect-timeout", "3000",
                 "pmwallet.service.read-timeout", "3000",
-                "pmwallet.service.connect-timeout", "3000"
+                "pmwallet.service.connect-timeout", "3000",
+                "pmwallet-api.apim-subscription-key", UUID.randomUUID().toString(),
+                "mil.apim-subscription-key", UUID.randomUUID().toString()
         );
     }
 

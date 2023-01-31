@@ -19,16 +19,19 @@ public interface PMWalletService {
 	@GET
 	@Path("/enabledServices/{taxCode}/saveNewCards")
 	@ClientHeaderParam(name = "Version", value = "${pmwallet-api.get-savenewcards.version}")
+	@ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${pmwallet-api.apim-subscription-key}")
     Uni<GetSaveNewCardsFlagRequest> getSaveNewCardsFlag(@PathParam("taxCode") String taxCode);
 
 	@GET
 	@Path("/cards/{panToken}/taxCode")
 	@ClientHeaderParam(name = "Version", value = "${pmwallet-api.get-taxcode.version}")
+	@ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${pmwallet-api.apim-subscription-key}")
 	Uni<RetrieveTaxCodeResponse> retrieveTaxCode(@PathParam("panToken") String panToken);
 	
 	@POST
 	@Path("/cards")
 	@ClientHeaderParam(name = "Version", value = "${pmwallet-api.post-cards.version}")
+	@ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${pmwallet-api.apim-subscription-key}")
     Uni<Response> presave(PresaveRequest card);
 
 }

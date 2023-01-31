@@ -1,0 +1,12 @@
+{
+    "request": {
+        "method": "POST",
+        "url": "/acceptedTermsConds"
+    },
+    "response": {
+        "status": 200,
+        "jsonBody": {
+          "saveNewCards": false
+        }
+    }
+}

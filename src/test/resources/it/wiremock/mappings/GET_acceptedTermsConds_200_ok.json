@@ -1,0 +1,16 @@
+{
+    "priority": 2,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/acceptedTermsConds/(RSS.*)"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "jsonBody": {
+            "outcome": "OK"
+        }
+    }
+}

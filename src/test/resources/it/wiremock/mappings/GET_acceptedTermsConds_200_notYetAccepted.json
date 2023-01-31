@@ -1,0 +1,16 @@
+{
+    "priority": 1,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/acceptedTermsConds/(VRDM.*)"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "jsonBody": {
+            "outcome": "TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED"
+        }
+    }
+}

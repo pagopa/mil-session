@@ -1,0 +1,16 @@
+{
+    "priority": 2,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/enabledServices/(RSSM.*)/saveNewCards"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "jsonBody": {
+            "saveNewCards": true
+        }
+    }
+}

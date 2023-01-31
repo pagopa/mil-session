@@ -1,0 +1,10 @@
+{
+    "priority": 100,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/enabledServices/(.*)/saveNewCards"
+    },
+    "response": {
+        "status": 500
+    }
+}

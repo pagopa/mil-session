@@ -1,0 +1,10 @@
+{
+    "priority": 100,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/cards/(.*)/taxCode"
+    },
+    "response": {
+        "status": 404
+    }
+}

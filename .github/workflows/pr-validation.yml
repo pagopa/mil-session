@@ -51,3 +51,4 @@ jobs:
         run: |
           mvn package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true
           mvn test-compile failsafe:integration-test -Pnative
+          mvn test-compile failsafe:verify -Pnative

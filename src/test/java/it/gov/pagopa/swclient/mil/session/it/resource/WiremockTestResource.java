@@ -32,6 +32,8 @@ public class WiremockTestResource implements QuarkusTestResourceLifecycleManager
     @Override
     public Map<String, String> start() {
 
+        logger.info("Starting WireMock container...");
+
         wiremockContainer = new GenericContainer<>(DockerImageName.parse("wiremock/wiremock:latest"))
                 .withNetwork(getNetwork())
                 .withNetworkAliases(WIREMOCK_NETWORK_ALIAS)
@@ -81,7 +83,9 @@ public class WiremockTestResource implements QuarkusTestResourceLifecycleManager
     public void stop() {
         // Stop the needed container(s)
         if (wiremockContainer != null) {
+            logger.info("Stopping WireMock container...");
             wiremockContainer.stop();
+            logger.info("WireMock container stopped!");
         }
     }
 }

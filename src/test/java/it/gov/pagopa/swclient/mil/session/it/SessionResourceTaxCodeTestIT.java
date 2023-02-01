@@ -5,20 +5,17 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
 import io.quarkus.test.common.DevServicesContext;
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import it.gov.pagopa.swclient.mil.session.ErrorCode;
 import it.gov.pagopa.swclient.mil.session.SessionTestData;
-import it.gov.pagopa.swclient.mil.session.dao.Session;
-import it.gov.pagopa.swclient.mil.session.it.resource.EnvironmentTestResource;
 import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
-import it.gov.pagopa.swclient.mil.session.it.resource.RedisTestResource;
+import it.gov.pagopa.swclient.mil.session.dao.Session;
 import it.gov.pagopa.swclient.mil.session.resource.SessionsResource;
-import it.gov.pagopa.swclient.mil.session.it.resource.WiremockTestResource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,9 +31,7 @@ import java.util.Arrays;
 import static io.restassured.RestAssured.given;
 
 @QuarkusIntegrationTest
-@QuarkusTestResource(value = EnvironmentTestResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(value = WiremockTestResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(value = RedisTestResource.class, restrictToAnnotatedClass = true)
+@TestProfile(IntegrationTestProfile.class)
 @TestHTTPEndpoint(SessionsResource.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SessionResourceTaxCodeTestIT implements DevServicesContext.ContextAware {

@@ -4,11 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.common.collect.Iterables;
 import io.quarkus.test.common.DevServicesContext;
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import it.gov.pagopa.swclient.mil.session.ErrorCode;
@@ -16,9 +15,6 @@ import it.gov.pagopa.swclient.mil.session.SessionTestData;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
 import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.dao.Session;
-import it.gov.pagopa.swclient.mil.session.it.resource.EnvironmentTestResource;
-import it.gov.pagopa.swclient.mil.session.it.resource.RedisTestResource;
-import it.gov.pagopa.swclient.mil.session.it.resource.WiremockTestResource;
 import it.gov.pagopa.swclient.mil.session.resource.SessionsResource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -30,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -38,9 +33,7 @@ import java.util.UUID;
 import static io.restassured.RestAssured.given;
 
 @QuarkusIntegrationTest
-@QuarkusTestResource(value = EnvironmentTestResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(value = RedisTestResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(value = WiremockTestResource.class, restrictToAnnotatedClass = true)
+@TestProfile(IntegrationTestProfile.class)
 @TestHTTPEndpoint(SessionsResource.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SessionsResourceLifeCycleTestIT implements DevServicesContext.ContextAware  {

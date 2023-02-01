@@ -32,6 +32,8 @@ public class RedisTestResource implements QuarkusTestResourceLifecycleManager, D
     @Override
     public Map<String, String> start() {
 
+        logger.info("Starting Redis container...");
+
         // Start the needed container(s)
         redisContainer = new GenericContainer(DockerImageName.parse("redis:latest"))
                 .withExposedPorts(6379)
@@ -81,7 +83,9 @@ public class RedisTestResource implements QuarkusTestResourceLifecycleManager, D
     public void stop() {
         // Stop the needed container(s)
         if (redisContainer != null) {
+            logger.info("Stopping Redis container...");
             redisContainer.stop();
+            logger.info("Redis container stopped");
         }
     }
 }

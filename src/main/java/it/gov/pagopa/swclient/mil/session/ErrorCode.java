@@ -18,10 +18,13 @@ public final class ErrorCode {
 	
 	public static final String ERROR_CALLING_SAVE_CARD_SERVICE = MODULE_ID + "000009";
 	
-	public static final String REDIS_ERROR_WHILE_SAVING_SESSION = MODULE_ID + "000010";
-	public static final String REDIS_ERROR_WHILE_RETRIEVING_SESSION = MODULE_ID + "000011";
-	public static final String REDIS_ERROR_WHILE_DELETING_SESSION = MODULE_ID + "000012";
-	public static final String REDIS_ERROR_SESSION_NOT_FOUND = MODULE_ID + "000013";
+	public static final String REDIS_ERROR_WHILE_SAVING_SESSION = MODULE_ID + "00000A";
+	public static final String REDIS_ERROR_WHILE_RETRIEVING_SESSION = MODULE_ID + "00000B";
+	public static final String REDIS_ERROR_WHILE_DELETING_SESSION = MODULE_ID + "00000C";
+	public static final String REDIS_ERROR_SESSION_NOT_FOUND = MODULE_ID + "00000D";
+
+	public static final String TERMS_AND_CONDS_ACCEPTED_NULL = MODULE_ID + "00000E";
+	public static final String SAVE_NEW_CARD_NULL = MODULE_ID + "00000F";
 
 	
 	private ErrorCode() {

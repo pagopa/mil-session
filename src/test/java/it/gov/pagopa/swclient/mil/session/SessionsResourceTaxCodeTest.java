@@ -1,9 +1,20 @@
 package it.gov.pagopa.swclient.mil.session;
 
-import static io.restassured.RestAssured.given;
-
-
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import io.smallrye.mutiny.Uni;
+import it.gov.pagopa.swclient.mil.bean.CommonHeader;
+import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
+import it.gov.pagopa.swclient.mil.session.bean.pmwallet.GetSaveNewCardsFlagRequest;
+import it.gov.pagopa.swclient.mil.session.bean.termsandconds.CheckResponse;
+import it.gov.pagopa.swclient.mil.session.client.PMWalletService;
+import it.gov.pagopa.swclient.mil.session.client.TermsAndConditionsService;
+import it.gov.pagopa.swclient.mil.session.dao.SessionService;
+import it.gov.pagopa.swclient.mil.session.resource.SessionsResource;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.junit.jupiter.api.Assertions;
@@ -12,31 +23,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.mockito.InjectMock;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import io.smallrye.mutiny.Uni;
-import it.gov.pagopa.swclient.mil.bean.CommonHeader;
-import it.gov.pagopa.swclient.mil.session.bean.SaveNewCardsResponse;
-import it.gov.pagopa.swclient.mil.session.bean.TermsAndConditionsResponse;
-import it.gov.pagopa.swclient.mil.session.bean.InitSessionRequest;
-import it.gov.pagopa.swclient.mil.session.client.PMWalletService;
-import it.gov.pagopa.swclient.mil.session.client.TermsAndConditionsService;
-import it.gov.pagopa.swclient.mil.session.dao.SessionService;
-import it.gov.pagopa.swclient.mil.session.resource.SessionsResource;
+import static io.restassured.RestAssured.given;
 
 
 @QuarkusTest
 @TestHTTPEndpoint(SessionsResource.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SessionsResourceTaxCodeTest {
-	
-	final static String CF_MARIO_ROSSI = "RSSMRA80A01H501U"; // accepted, save cards
-	final static String CF_LUIGI_ROSSI = "RSSLGU80A01H501U"; // accepted, not save cards
-	
-	final static String CF_MARIO_VERDI = "VRDMRA80A01H501Q"; // not accepted
 
 	@InjectMock
     @RestClient 
@@ -61,20 +54,20 @@ class SessionsResourceTaxCodeTest {
 	@Test
 	void testInitSession_taxCode_201_accepted_saveCards() {
 		
-		InitSessionRequest requestBody = new InitSessionRequest();
-		requestBody.setTaxCode(CF_MARIO_ROSSI);
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setTaxCode(SessionTestData.CF_MARIO_ROSSI);
 		
-		TermsAndConditionsResponse termsAndCondsOk = new TermsAndConditionsResponse();
+		CheckResponse termsAndCondsOk = new CheckResponse();
 		termsAndCondsOk.setOutcome(Outcome.OK.toString());
 		
-		SaveNewCardsResponse saveNewCardsTrue = new SaveNewCardsResponse();
+		GetSaveNewCardsFlagRequest saveNewCardsTrue = new GetSaveNewCardsFlagRequest();
 		saveNewCardsTrue.setSaveNewCards(true);
 		
-		Mockito.when(termsAndCondsService.getTCByTaxCode(Mockito.eq(CF_MARIO_ROSSI), Mockito.any(CommonHeader.class)))
+		Mockito.when(termsAndCondsService.check(Mockito.eq(SessionTestData.CF_MARIO_ROSSI), Mockito.any(CommonHeader.class)))
 			.thenReturn(Uni.createFrom().item(termsAndCondsOk));
 		
 		Mockito
-			.when(pmWalletService.getSaveNewCards(CF_MARIO_ROSSI))
+			.when(pmWalletService.getSaveNewCardsFlag(SessionTestData.CF_MARIO_ROSSI))
 			.thenReturn(Uni.createFrom().item(saveNewCardsTrue));
 
 		Response response = given()
@@ -104,21 +97,21 @@ class SessionsResourceTaxCodeTest {
 	@Test
 	void testInitSession_taxCode_201_accepted_notSaveCards() {
 		
-		InitSessionRequest requestBody = new InitSessionRequest();
-		requestBody.setTaxCode(CF_LUIGI_ROSSI);
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setTaxCode(SessionTestData.CF_LUIGI_ROSSI);
 		
-		TermsAndConditionsResponse termsAndCondsOk = new TermsAndConditionsResponse();
+		CheckResponse termsAndCondsOk = new CheckResponse();
 		termsAndCondsOk.setOutcome(Outcome.OK.toString());
 		
-		SaveNewCardsResponse saveNewCardsFalse = new SaveNewCardsResponse();
+		GetSaveNewCardsFlagRequest saveNewCardsFalse = new GetSaveNewCardsFlagRequest();
 		saveNewCardsFalse.setSaveNewCards(false);
 		
 		Mockito
-			.when(termsAndCondsService.getTCByTaxCode(Mockito.eq(CF_LUIGI_ROSSI), Mockito.any(CommonHeader.class)))
+			.when(termsAndCondsService.check(Mockito.eq(SessionTestData.CF_LUIGI_ROSSI), Mockito.any(CommonHeader.class)))
 			.thenReturn(Uni.createFrom().item(termsAndCondsOk));
 		
 		Mockito
-			.when(pmWalletService.getSaveNewCards(CF_LUIGI_ROSSI))
+			.when(pmWalletService.getSaveNewCardsFlag(SessionTestData.CF_LUIGI_ROSSI))
 			.thenReturn(Uni.createFrom().item(saveNewCardsFalse));
 		
 		Response response = given()
@@ -148,15 +141,12 @@ class SessionsResourceTaxCodeTest {
 	@Test
 	void testInitSession_taxCode_201_notAccepted() {
 		
-		InitSessionRequest requestBody = new InitSessionRequest();
-		requestBody.setTaxCode(CF_MARIO_VERDI);
-		
-		TermsAndConditionsResponse termsAndCondsKO = new TermsAndConditionsResponse();
-		termsAndCondsKO.setOutcome(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString());
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setTaxCode(SessionTestData.CF_LUIGI_VERDI);
 
 		Mockito
-			.when(termsAndCondsService.getTCByTaxCode(Mockito.eq(CF_MARIO_VERDI), Mockito.any(CommonHeader.class)))
-			.thenReturn(Uni.createFrom().item(termsAndCondsKO));
+			.when(termsAndCondsService.check(Mockito.eq(SessionTestData.CF_LUIGI_VERDI), Mockito.any(CommonHeader.class)))
+				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException(404)));
 
 		Response response = given()
 			.contentType(ContentType.JSON)
@@ -181,12 +171,49 @@ class SessionsResourceTaxCodeTest {
 		Assertions.assertNotNull(response.header("Location"));
      
 	}
+
+	@Test
+	void testInitSession_taxCode_201_AcceptedExpired() {
+
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setTaxCode(SessionTestData.CF_MARIO_VERDI);
+
+		CheckResponse termsAndCondsKO = new CheckResponse();
+		termsAndCondsKO.setOutcome(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString());
+
+		Mockito
+				.when(termsAndCondsService.check(Mockito.eq(SessionTestData.CF_MARIO_VERDI), Mockito.any(CommonHeader.class)))
+				.thenReturn(Uni.createFrom().item(termsAndCondsKO));
+
+		Response response = given()
+				.contentType(ContentType.JSON)
+				.headers(
+						"RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
+						"Version", "1.0.0",
+						"AcquirerId", "12345",
+						"Channel", "ATM",
+						"TerminalId", "12345678")
+				.and()
+				.body(requestBody)
+				.when()
+				.post()
+				.then()
+				.extract()
+				.response();
+
+		Assertions.assertEquals(201, response.statusCode());
+		Assertions.assertEquals(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString(), response.jsonPath().getString("outcome"));
+		Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
+		Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
+		Assertions.assertNotNull(response.header("Location"));
+
+	}
 	
 
 	@Test
 	void testInitSession_taxCode_400_validation() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
+		CreateSessionRequest requestBody = new CreateSessionRequest();
 		requestBody.setTaxCode("ABCDE");
 
 		Response response = given()
@@ -216,12 +243,12 @@ class SessionsResourceTaxCodeTest {
 	@Test
 	void testInitSession_taxCode_500_integrationError_termsAndConditions() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
-		requestBody.setTaxCode(CF_MARIO_ROSSI);
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setTaxCode(SessionTestData.CF_MARIO_ROSSI);
 
 		Mockito
-				.when(termsAndCondsService.getTCByTaxCode(Mockito.anyString(), Mockito.any(CommonHeader.class)))
-				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException()));
+				.when(termsAndCondsService.check(Mockito.anyString(), Mockito.any(CommonHeader.class)))
+				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException(500)));
 
 		Response response = given()
 				.contentType(ContentType.JSON)
@@ -250,19 +277,19 @@ class SessionsResourceTaxCodeTest {
 	@Test
 	void testInitSession_taxCode_201_accepted_integrationError_getSaveNewCards() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
-		requestBody.setTaxCode(CF_MARIO_ROSSI);
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setTaxCode(SessionTestData.CF_MARIO_ROSSI);
 
-		TermsAndConditionsResponse termsAndCondsKO = new TermsAndConditionsResponse();
+		CheckResponse termsAndCondsKO = new CheckResponse();
 		termsAndCondsKO.setOutcome(Outcome.OK.toString());
 
 		Mockito
-				.when(termsAndCondsService.getTCByTaxCode(Mockito.eq(CF_MARIO_ROSSI), Mockito.any(CommonHeader.class)))
+				.when(termsAndCondsService.check(Mockito.eq(SessionTestData.CF_MARIO_ROSSI), Mockito.any(CommonHeader.class)))
 				.thenReturn(Uni.createFrom().item(termsAndCondsKO));
 
 		Mockito
-				.when(pmWalletService.getSaveNewCards(CF_MARIO_ROSSI))
-				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException()));
+				.when(pmWalletService.getSaveNewCardsFlag(SessionTestData.CF_MARIO_ROSSI))
+				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException(500)));
 
 		Response response = given()
 				.contentType(ContentType.JSON)
@@ -291,26 +318,26 @@ class SessionsResourceTaxCodeTest {
 	@Test
 	void testInitSession_taxCode_500_integrationError_saveSession() {
 
-		InitSessionRequest requestBody = new InitSessionRequest();
-		requestBody.setTaxCode(CF_MARIO_ROSSI);
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setTaxCode(SessionTestData.CF_MARIO_ROSSI);
 
-		TermsAndConditionsResponse termsAndCondsKO = new TermsAndConditionsResponse();
+		CheckResponse termsAndCondsKO = new CheckResponse();
 		termsAndCondsKO.setOutcome(Outcome.OK.toString());
 
-		SaveNewCardsResponse saveNewCardsTrue = new SaveNewCardsResponse();
+		GetSaveNewCardsFlagRequest saveNewCardsTrue = new GetSaveNewCardsFlagRequest();
 		saveNewCardsTrue.setSaveNewCards(true);
 
 		Mockito
-				.when(termsAndCondsService.getTCByTaxCode(Mockito.eq(CF_MARIO_ROSSI), Mockito.any(CommonHeader.class)))
+				.when(termsAndCondsService.check(Mockito.eq(SessionTestData.CF_MARIO_ROSSI), Mockito.any(CommonHeader.class)))
 				.thenReturn(Uni.createFrom().item(termsAndCondsKO));
 
 		Mockito
-				.when(pmWalletService.getSaveNewCards(CF_MARIO_ROSSI))
+				.when(pmWalletService.getSaveNewCardsFlag(SessionTestData.CF_MARIO_ROSSI))
 				.thenReturn(Uni.createFrom().item(saveNewCardsTrue));
 
 		Mockito
 				.when(sessionService.set(Mockito.anyString(), Mockito.any()))
-				.thenReturn(Uni.createFrom().failure(() -> new RuntimeException()));
+				.thenReturn(Uni.createFrom().failure(() -> new ClientWebApplicationException(500)));
 
 		Response response = given()
 				.contentType(ContentType.JSON)

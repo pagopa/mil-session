@@ -1,0 +1,16 @@
+{
+    "priority": 2,
+    "request": {
+        "method": "POST",
+        "url": "/cards",
+        "bodyPatterns" : [
+            {
+                "matchesJsonPath" : "$[?(@.panToken == 'aa35a707e2684045bd439e7d11a8956d')]"
+            }
+        ]
+    },
+    "response": {
+        "status": 500,
+        "fixedDelayMilliseconds": 5000
+    }
+}

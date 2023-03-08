@@ -47,5 +47,8 @@ jobs:
       - name: Build dependencies with Maven
         run: mvn clean validate -Pbootstrap
 
-      - name: Execute unit-testing
-        run: mvn clean test
+      - name: Execute integration tests
+        run: |
+          mvn package -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true
+          mvn test-compile failsafe:integration-test -Pnative
+          mvn test-compile failsafe:verify -Pnative

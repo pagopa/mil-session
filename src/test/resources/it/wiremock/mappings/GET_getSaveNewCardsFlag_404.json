@@ -1,0 +1,10 @@
+{
+    "priority": 3,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/enabledServices/RSSLSN80A01H501K/saveNewCards"
+    },
+    "response": {
+        "status": 500
+    }
+}

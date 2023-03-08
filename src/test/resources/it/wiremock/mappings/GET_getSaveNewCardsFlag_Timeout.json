@@ -1,0 +1,11 @@
+{
+    "priority": 4,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/enabledServices/RSSGNN80A41H501R/saveNewCards"
+    },
+    "response": {
+        "status": 404,
+        "fixedDelayMilliseconds": 5000
+    }
+}

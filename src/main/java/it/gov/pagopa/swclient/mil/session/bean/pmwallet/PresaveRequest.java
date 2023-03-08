@@ -1,6 +1,6 @@
-package it.gov.pagopa.swclient.mil.session.bean;
+package it.gov.pagopa.swclient.mil.session.bean.pmwallet;
 
-public class SaveCardRequest {
+public class PresaveRequest {
 	
 	private String panToken;
 	private String taxCode;
@@ -20,7 +20,7 @@ public class SaveCardRequest {
 	
 	@Override
 	public String toString() {
-		return "SaveCardRequest [panToken=" + panToken + ", taxCode=" + taxCode + "]";
+		return "PresaveRequest [panToken=" + panToken + ", taxCode=" + taxCode + "]";
 	}
 	
 }

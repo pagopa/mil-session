@@ -1,11 +1,11 @@
 package it.gov.pagopa.swclient.mil.session.bean;
 
+import it.gov.pagopa.swclient.mil.session.ErrorCode;
+
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.Pattern;
 
-import it.gov.pagopa.swclient.mil.session.ErrorCode;
-
-public class InitSessionRequest {
+public class CreateSessionRequest {
 
 	@Pattern(regexp = "^(?:([A-Z]{6}\\d{2}[A-Z]\\d{2}[A-Z]\\d{3}[A-Z])|(\\d{11}))$", message = "[" + ErrorCode.TAX_CODE_MUST_MATCH_REGEXP + "] taxCode must match \"{regexp}\"")
 	private String taxCode;
@@ -41,7 +41,7 @@ public class InitSessionRequest {
 
 	@Override
 	public String toString() {
-		return "InitSessionRequest [taxCode=" + taxCode + ", panToken=" + panToken + "]";
+		return "CreateSessionRequest [taxCode=" + taxCode + ", panToken=" + panToken + "]";
 	}
 
 }

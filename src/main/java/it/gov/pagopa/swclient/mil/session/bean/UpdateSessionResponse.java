@@ -1,9 +1,12 @@
 package it.gov.pagopa.swclient.mil.session.bean;
 
-public class TermsAndConditionsResponse {
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
-	private String outcome;
+@RegisterForReflection
+public class UpdateSessionResponse {
 	
+	private String outcome;
+
 	public String getOutcome() {
 		return outcome;
 	}
@@ -14,7 +17,7 @@ public class TermsAndConditionsResponse {
 
 	@Override
 	public String toString() {
-		return "TermsAndConditionsResponse [outcome=" + outcome + "]";
+		return "PatchSessionResponse [outcome=" + outcome + "]";
 	}
 	
 }

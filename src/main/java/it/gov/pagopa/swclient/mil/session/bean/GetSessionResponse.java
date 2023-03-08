@@ -2,7 +2,9 @@ package it.gov.pagopa.swclient.mil.session.bean;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
+@RegisterForReflection
 public class GetSessionResponse {
 	
 	private String outcome;

@@ -1,0 +1,11 @@
+{
+    "priority": 3,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/cards/(y.*)/taxCode"
+    },
+    "response": {
+        "status": 500,
+        "fixedDelayMilliseconds": 5000
+    }
+}

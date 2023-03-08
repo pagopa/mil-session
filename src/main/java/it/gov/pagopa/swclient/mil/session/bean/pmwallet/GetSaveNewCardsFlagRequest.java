@@ -1,6 +1,6 @@
-package it.gov.pagopa.swclient.mil.session.bean;
+package it.gov.pagopa.swclient.mil.session.bean.pmwallet;
 
-public class SaveNewCardsResponse {
+public class GetSaveNewCardsFlagRequest {
 
 	private boolean saveNewCards;
 
@@ -14,7 +14,7 @@ public class SaveNewCardsResponse {
 
 	@Override
 	public String toString() {
-		return "SaveNewCardsResponse [saveNewCards=" + saveNewCards + "]";
+		return "GetSaveNewCardsFlagRequest [saveNewCards=" + saveNewCards + "]";
 	}
 	
 }

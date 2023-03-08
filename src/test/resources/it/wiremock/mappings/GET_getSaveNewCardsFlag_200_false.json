@@ -1,0 +1,16 @@
+{
+    "priority": 1,
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/enabledServices/RSSLGU80A01H501U/saveNewCards"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "jsonBody": {
+            "saveNewCards": false
+        }
+    }
+}

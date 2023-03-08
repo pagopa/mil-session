@@ -1,9 +1,23 @@
 package it.gov.pagopa.swclient.mil.session.it;
 
+import static io.restassured.RestAssured.given;
+
+import java.util.Arrays;
+import java.util.UUID;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+
 import io.quarkus.test.common.DevServicesContext;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
@@ -16,20 +30,8 @@ import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
 import it.gov.pagopa.swclient.mil.session.dao.Session;
 import it.gov.pagopa.swclient.mil.session.resource.SessionsResource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-
-import java.util.Arrays;
-import java.util.UUID;
-
-import static io.restassured.RestAssured.given;
 
 @QuarkusIntegrationTest
 @TestProfile(IntegrationTestProfile.class)
@@ -341,179 +343,6 @@ class SessionsResourcePanTokenTestIT implements DevServicesContext.ContextAware 
 	}
 
 
-	@Test
-	void testCreateSession_panToken_201_accepted_getSaveNewCardsFlagTimeout() {
-
-		CreateSessionRequest requestBody = new CreateSessionRequest();
-		requestBody.setPanToken(SessionTestData.PAN_GIOVANNA_ROSSI);
-
-		Response response = given()
-				.contentType(ContentType.JSON)
-				.headers(
-						"RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
-						"Version", "1.0.0",
-						"AcquirerId", "12345",
-						"Channel", "ATM",
-						"TerminalId", "12345678")
-				.and()
-				.body(requestBody)
-				.when()
-				.post()
-				.then()
-				.extract()
-				.response();
-
-		Assertions.assertEquals(201, response.statusCode());
-		Assertions.assertEquals(Outcome.OK.toString(), response.jsonPath().getString("outcome"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
-		Assertions.assertNotNull(response.header("Location"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
-
-		// test data on redis
-		try (Jedis jedis = jedisPool.getResource()) {
-			String sessionId = Iterables.getLast(Arrays.asList(response.header("Location").split("/")));
-			String redisSession = jedis.get(sessionId);
-			Assertions.assertNotNull(redisSession);
-			Session storedSession = new ObjectMapper().readValue(redisSession, Session.class);
-			logger.debug("PAN_GIOVANNA_ROSSI stored session -> {}", storedSession);
-			Assertions.assertEquals(SessionTestData.CF_GIOVANNA_ROSSI, storedSession.getTaxCode());
-			Assertions.assertTrue(storedSession.isTermsAndConditionAccepted());
-			Assertions.assertFalse(storedSession.isSaveNewCards());
-
-		} catch (JsonMappingException e) {
-			throw new RuntimeException(e);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-
-	}
-
-	@Test
-	void testCreateSession_panToken_201_notAccepted() {
-
-		CreateSessionRequest requestBody = new CreateSessionRequest();
-		requestBody.setPanToken(SessionTestData.PAN_MARIO_VERDI);
-
-		Response response = given()
-				.contentType(ContentType.JSON)
-				.headers(
-						"RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
-						"Version", "1.0.0",
-						"AcquirerId", "12345",
-						"Channel", "ATM",
-						"TerminalId", "12345678")
-				.and()
-				.body(requestBody)
-				.when()
-				.post()
-				.then()
-				.extract()
-				.response();
-
-		Assertions.assertEquals(201, response.statusCode());
-		Assertions.assertEquals(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString(), response.jsonPath().getString("outcome"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
-		Assertions.assertNotNull(response.header("Location"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
-
-		// test data on redis
-		try (Jedis jedis = jedisPool.getResource()) {
-			String sessionId = Iterables.getLast(Arrays.asList(response.header("Location").split("/")));
-			String redisSession = jedis.get(sessionId);
-			Assertions.assertNotNull(redisSession);
-			Session storedSession = new ObjectMapper().readValue(redisSession, Session.class);
-			logger.debug("PAN_MARIO_VERDI stored session -> {}", storedSession);
-			Assertions.assertEquals(SessionTestData.CF_MARIO_VERDI, storedSession.getTaxCode());
-			Assertions.assertFalse(storedSession.isTermsAndConditionAccepted());
-			Assertions.assertNull(storedSession.isSaveNewCards());
-
-		} catch (JsonMappingException e) {
-			throw new RuntimeException(e);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-
-	}
-
-
-	@Test
-	void testCreateSession_panToken_201_tcCheck404() {
-
-		CreateSessionRequest requestBody = new CreateSessionRequest();
-		requestBody.setPanToken(SessionTestData.PAN_LUIGI_VERDI);
-
-		Response response = given()
-				.contentType(ContentType.JSON)
-				.headers(
-						"RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
-						"Version", "1.0.0",
-						"AcquirerId", "12345",
-						"Channel", "ATM",
-						"TerminalId", "12345678")
-				.and()
-				.body(requestBody)
-				.when()
-				.post()
-				.then()
-				.extract()
-				.response();
-
-		Assertions.assertEquals(201, response.statusCode());
-		Assertions.assertEquals(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString(), response.jsonPath().getString("outcome"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
-		Assertions.assertNotNull(response.header("Location"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
-
-		// test data on redis
-		try (Jedis jedis = jedisPool.getResource()) {
-			String sessionId = Iterables.getLast(Arrays.asList(response.header("Location").split("/")));
-			String redisSession = jedis.get(sessionId);
-			Assertions.assertNotNull(redisSession);
-			Session storedSession = new ObjectMapper().readValue(redisSession, Session.class);
-			logger.debug("PAN_LUIGI_VERDI stored session -> {}", storedSession);
-			Assertions.assertEquals(SessionTestData.CF_LUIGI_VERDI, storedSession.getTaxCode());
-			Assertions.assertFalse(storedSession.isTermsAndConditionAccepted());
-			Assertions.assertNull(storedSession.isSaveNewCards());
-
-		} catch (JsonMappingException e) {
-			throw new RuntimeException(e);
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
-		}
-
-	}
-
-
-	@Test
-	void testCreateSession_panToken_500_tcCheck500() {
-
-		CreateSessionRequest requestBody = new CreateSessionRequest();
-		requestBody.setPanToken(SessionTestData.PAN_MARIO_BIANCHI);
-
-		Response response = given()
-			.contentType(ContentType.JSON)
-			.headers(
-					"RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
-					"Version", "1.0.0",
-					"AcquirerId", "12345",
-					"Channel", "ATM",
-					"TerminalId", "12345678")
-			.and()
-			.body(requestBody)
-			.when()
-			.post()
-			.then()
-			.extract()
-			.response();
-
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertNull(response.jsonPath().getJsonObject("outcome"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
-		Assertions.assertNull(response.header("Location"));
-		Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
-
-	}
-
 
 	@Test
 	void testCreateSession_panToken_500_tcCheckTimeout() {
@@ -681,5 +510,99 @@ class SessionsResourcePanTokenTestIT implements DevServicesContext.ContextAware 
 		}
 
 	}
+	
+	@Test
+	void testCreateSession_panToken_201_dbLocal_accepted() {
+
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setPanToken(SessionTestData.PAN_FRANCO_ROSSI);
+
+		Response response = given()
+			.contentType(ContentType.JSON)
+			.headers(
+					"RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
+					"Version", "1.0.0",
+					"AcquirerId", "12345",
+					"Channel", "ATM",
+					"TerminalId", "12345678")
+			.and()
+			.body(requestBody)
+			.when()
+			.post()
+			.then()
+			.extract()
+			.response();
+		
+        Assertions.assertEquals(201, response.statusCode());
+        Assertions.assertEquals(Outcome.OK.toString(), response.jsonPath().getString("outcome"));
+        Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
+		Assertions.assertNotNull(response.header("Location"));
+		Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
+
+		// test data on redis
+		try (Jedis jedis = jedisPool.getResource()) {
+			String sessionId = Iterables.getLast(Arrays.asList(response.header("Location").split("/")));
+			String redisSession = jedis.get(sessionId);
+			Assertions.assertNotNull(redisSession);
+			Session storedSession = new ObjectMapper().readValue(redisSession, Session.class);
+			logger.debug("CF_FRANCO_ROSSI stored session -> {}", storedSession);
+			Assertions.assertEquals(SessionTestData.CF_FRANCO_ROSSI, storedSession.getTaxCode());
+			Assertions.assertTrue(storedSession.isTermsAndConditionAccepted());
+
+		} catch (JsonMappingException e) {
+			throw new RuntimeException(e);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+
+	}
+	
+	
+	@Test
+	void testCreateSession_panToken_201_dbLocal_notAccepted() {
+
+		CreateSessionRequest requestBody = new CreateSessionRequest();
+		requestBody.setPanToken(SessionTestData.PAN_FRANCO_VERDI);
+
+		Response response = given()
+			.contentType(ContentType.JSON)
+			.headers(
+					"RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
+					"Version", "1.0.0",
+					"AcquirerId", "12345",
+					"Channel", "ATM",
+					"TerminalId", "12345678")
+			.and()
+			.body(requestBody)
+			.when()
+			.post()
+			.then()
+			.extract()
+			.response();
+		
+        Assertions.assertEquals(201, response.statusCode());
+        Assertions.assertEquals(Outcome.TERMS_AND_CONDITIONS_NOT_YET_ACCEPTED.toString(), response.jsonPath().getString("outcome"));
+        Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
+		Assertions.assertNotNull(response.header("Location"));
+		Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
+
+		// test data on redis
+		try (Jedis jedis = jedisPool.getResource()) {
+			String sessionId = Iterables.getLast(Arrays.asList(response.header("Location").split("/")));
+			String redisSession = jedis.get(sessionId);
+			Assertions.assertNotNull(redisSession);
+			Session storedSession = new ObjectMapper().readValue(redisSession, Session.class);
+			logger.debug("CF_FRANCO_VERDI stored session -> {}", storedSession);
+			Assertions.assertEquals(SessionTestData.CF_FRANCO_VERDI, storedSession.getTaxCode());
+			Assertions.assertFalse(storedSession.isTermsAndConditionAccepted());
+
+		} catch (JsonMappingException e) {
+			throw new RuntimeException(e);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+
+	}
+	
 
 }

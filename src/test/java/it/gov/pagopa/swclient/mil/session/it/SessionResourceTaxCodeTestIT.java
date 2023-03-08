@@ -1,9 +1,22 @@
 package it.gov.pagopa.swclient.mil.session.it;
 
+import static io.restassured.RestAssured.given;
+
+import java.util.Arrays;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+
 import io.quarkus.test.common.DevServicesContext;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
@@ -16,19 +29,8 @@ import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
 import it.gov.pagopa.swclient.mil.session.bean.Outcome;
 import it.gov.pagopa.swclient.mil.session.dao.Session;
 import it.gov.pagopa.swclient.mil.session.resource.SessionsResource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-
-import java.util.Arrays;
-
-import static io.restassured.RestAssured.given;
 
 @QuarkusIntegrationTest
 @TestProfile(IntegrationTestProfile.class)
@@ -476,58 +478,5 @@ class SessionResourceTaxCodeTestIT implements DevServicesContext.ContextAware {
         Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
 
     }
-
-
-
-
-
-
-//    @Test
-//    void testCreateSession_taxCode_500_integrationError_saveSession() {
-//
-//        CreateSessionRequest requestBody = new CreateSessionRequest();
-//        requestBody.setTaxCode(CF_MARIO_ROSSI);
-//
-//        TermsAndConditionsResponse termsAndCondsKO = new TermsAndConditionsResponse();
-//        termsAndCondsKO.setOutcome(Outcome.OK.toString());
-//
-//        SaveNewCardsResponse saveNewCardsTrue = new SaveNewCardsResponse();
-//        saveNewCardsTrue.setSaveNewCards(true);
-//
-//        Mockito
-//                .when(termsAndCondsService.getTCByTaxCode(Mockito.eq(CF_MARIO_ROSSI), Mockito.any(CommonHeader.class)))
-//                .thenReturn(Uni.createFrom().item(termsAndCondsKO));
-//
-//        Mockito
-//                .when(pmWalletService.getSaveNewCards(CF_MARIO_ROSSI))
-//                .thenReturn(Uni.createFrom().item(saveNewCardsTrue));
-//
-//        Mockito
-//                .when(sessionService.set(Mockito.anyString(), Mockito.any()))
-//                .thenReturn(Uni.createFrom().failure(() -> new RuntimeException()));
-//
-//        Response response = given()
-//                .contentType(ContentType.JSON)
-//                .headers(
-//                        "RequestId", "1de3c885-5584-4910-b43a-4ad6e3fd55f9",
-//                        "Version", "1.0.0",
-//                        "AcquirerId", "12345",
-//                        "Channel", "ATM",
-//                        "TerminalId", "12345678")
-//                .and()
-//                .body(requestBody)
-//                .when()
-//                .post()
-//                .then()
-//                .extract()
-//                .response();
-//
-//        Assertions.assertEquals(500, response.statusCode());
-//        Assertions.assertEquals(true, response.jsonPath().getList("errors").contains(ErrorCode.REDIS_ERROR_WHILE_SAVING_SESSION));
-//        Assertions.assertNull(response.jsonPath().getJsonObject("outcome"));
-//        Assertions.assertNull(response.jsonPath().getJsonObject("saveNewCards"));
-//        Assertions.assertNull(response.jsonPath().getJsonObject("pairingToken"));
-//
-//    }
 
 }

@@ -1,28 +1,9 @@
 package it.gov.pagopa.swclient.mil.session.resource;
 
-import io.quarkus.logging.Log;
-import io.smallrye.mutiny.ItemWithContext;
-import io.smallrye.mutiny.Uni;
-import it.gov.pagopa.swclient.mil.bean.CommonHeader;
-import it.gov.pagopa.swclient.mil.bean.Errors;
-import it.gov.pagopa.swclient.mil.session.ErrorCode;
-import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
-import it.gov.pagopa.swclient.mil.session.bean.CreateSessionResponse;
-import it.gov.pagopa.swclient.mil.session.bean.GetSessionResponse;
-import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionRequest;
-import it.gov.pagopa.swclient.mil.session.bean.pmwallet.RetrieveTaxCodeResponse;
-import it.gov.pagopa.swclient.mil.session.bean.Outcome;
-import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionResponse;
-import it.gov.pagopa.swclient.mil.session.bean.pmwallet.PresaveRequest;
-import it.gov.pagopa.swclient.mil.session.bean.pmwallet.GetSaveNewCardsFlagRequest;
-import it.gov.pagopa.swclient.mil.session.bean.termsandconds.CheckResponse;
-import it.gov.pagopa.swclient.mil.session.client.PMWalletService;
-import it.gov.pagopa.swclient.mil.session.client.TermsAndConditionsService;
-import it.gov.pagopa.swclient.mil.session.dao.Session;
-import it.gov.pagopa.swclient.mil.session.dao.SessionService;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.jboss.resteasy.reactive.ClientWebApplicationException;
+import java.net.URI;
+import java.security.SecureRandom;
+import java.util.List;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -41,16 +22,39 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.net.URI;
-import java.security.SecureRandom;
-import java.util.List;
-import java.util.UUID;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.resteasy.reactive.ClientWebApplicationException;
+
+import io.quarkus.logging.Log;
+import io.smallrye.mutiny.ItemWithContext;
+import io.smallrye.mutiny.Uni;
+import it.gov.pagopa.swclient.mil.bean.CommonHeader;
+import it.gov.pagopa.swclient.mil.bean.Errors;
+import it.gov.pagopa.swclient.mil.session.ErrorCode;
+import it.gov.pagopa.swclient.mil.session.bean.CreateSessionRequest;
+import it.gov.pagopa.swclient.mil.session.bean.CreateSessionResponse;
+import it.gov.pagopa.swclient.mil.session.bean.GetSessionResponse;
+import it.gov.pagopa.swclient.mil.session.bean.Outcome;
+import it.gov.pagopa.swclient.mil.session.bean.TaxCodeSource;
+import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionRequest;
+import it.gov.pagopa.swclient.mil.session.bean.UpdateSessionResponse;
+import it.gov.pagopa.swclient.mil.session.bean.pmwallet.GetSaveNewCardsFlagRequest;
+import it.gov.pagopa.swclient.mil.session.bean.pmwallet.PresaveRequest;
+import it.gov.pagopa.swclient.mil.session.bean.pmwallet.RetrieveTaxCodeResponse;
+import it.gov.pagopa.swclient.mil.session.bean.termsandconds.CheckResponse;
+import it.gov.pagopa.swclient.mil.session.client.PMWalletService;
+import it.gov.pagopa.swclient.mil.session.client.TermsAndConditionsService;
+import it.gov.pagopa.swclient.mil.session.dao.Session;
+import it.gov.pagopa.swclient.mil.session.dao.SessionService;
 
 @Path("/sessions")
 public class SessionsResource {
 
-	private static final String CONTEXT_TAX_CODE = "TAX_CODE";
-	private static final String CONTEXT_SAVE_NEW_CARDS = "SAVE_NEW_CARDS";
+	private static final String CONTEXT_TAX_CODE 		= "TAX_CODE";
+	private static final String CONTEXT_SAVE_NEW_CARDS 	= "SAVE_NEW_CARDS";
+	private static final String CONTEXT_SOURCE			= "SOURCE";
 
 	private static final String SESSION_ID_REGEX = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$";
 
@@ -85,62 +89,74 @@ public class SessionsResource {
 		Log.debugf("createSession - Input parameters: %s, %s", commonHeader, createSessionRequest);
 
 		return Uni.createFrom()
-				.item(createSessionRequest.getTaxCode())
-				.onItem().ifNull().switchTo(() -> {
-					// if the tokenized pan is passed in request, retrieve tax code from PM wallet
-					Log.debugf("Calling PMWallet - retrieve Tax Code by PAN token - Input parameters: panToken=%s", createSessionRequest.getPanToken());
-					return pmWalletService.retrieveTaxCode(createSessionRequest.getPanToken())
-							.onFailure(t -> (t instanceof ClientWebApplicationException exc) && exc.getResponse().getStatus() == 404).recoverWithItem(new RetrieveTaxCodeResponse())
-							.onFailure().transform(t -> {
-								Log.errorf(t, "[%s] Error while retrieving taxCode from PM wallet", ErrorCode.ERROR_CALLING_GET_TAX_CODE_SERVICE);
-								return new InternalServerErrorException(Response
-										.status(Status.INTERNAL_SERVER_ERROR)
-										.entity(new Errors(List.of(ErrorCode.ERROR_CALLING_GET_TAX_CODE_SERVICE)))
-										.build());
-							})
-							.map(RetrieveTaxCodeResponse::getTaxCode);
-				})
-				.chain(taxCode -> {
-					if (taxCode == null) {
-						// if was not possible to retrieve the tax code, generates a pairing token
-						// to try to identify the user with IO
-						String pairingToken = String.format("%05d", new SecureRandom().nextInt(9999 + 1));
+		         .item(createSessionRequest.getTaxCode())
+		         .attachContext()
+		         .chain(ctxTaxCode -> {
+		            if (ctxTaxCode.get() != null) {
+		               return Uni.createFrom().item(ctxTaxCode);
+		            }
+		            else {
+		               // if the tokenized pan is passed in request, retrieve tax code from PM wallet
+		               Log.debugf("Calling PMWallet - retrieve Tax Code by PAN token - Input parameters: panToken=%s", createSessionRequest.getPanToken());
+		               return pmWalletService.retrieveTaxCode(createSessionRequest.getPanToken())
+		                     .onFailure(t -> (t instanceof ClientWebApplicationException exc) && exc.getResponse().getStatus() == 404).recoverWithItem(new RetrieveTaxCodeResponse())
+		                     .onFailure().transform(t -> {
+		                        Log.errorf(t, "[%s] Error while retrieving taxCode from PM wallet", ErrorCode.ERROR_CALLING_GET_TAX_CODE_SERVICE);
+		                        return new InternalServerErrorException(Response
+		                              .status(Status.INTERNAL_SERVER_ERROR)
+		                              .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_GET_TAX_CODE_SERVICE)))
+		                              .build());
+		                     })
+		                     .map(res ->  {
+		                    	 ItemWithContext<String> walletCtxTaxCode = new ItemWithContext<>(ctxTaxCode.context(), res.getTaxCode());
+		                    	 if (res.getSource() != null) {
+		                    		 walletCtxTaxCode.context().put(CONTEXT_SOURCE, res.getSource());
+		                    	 }
+		                    	 return walletCtxTaxCode;
+		                     });
+		            }
+		         })
+		         .chain(ctxTaxCode -> {
+		            if (ctxTaxCode.get() == null) {
+		               // if was not possible to retrieve the tax code, generates a pairing token
+		               // to try to identify the user with IO
+		               String pairingToken = String.format("%05d", new SecureRandom().nextInt(9999 + 1));
 
-						CreateSessionResponse initSessionResponse = new CreateSessionResponse();
-						initSessionResponse.setOutcome(Outcome.PAIR_WITH_IO.toString());
-						initSessionResponse.setPairingToken(pairingToken);
+		               CreateSessionResponse initSessionResponse = new CreateSessionResponse();
+		               initSessionResponse.setOutcome(Outcome.PAIR_WITH_IO.toString());
+		               initSessionResponse.setPairingToken(pairingToken);
 
-						URI location = URI.create("/sessions?pairingToken=" + pairingToken);
-						Log.debugf("createSession - Output parameters: %s, %s", location, initSessionResponse);
-						return Uni.createFrom().item(
-								Response
-										.status(Status.ACCEPTED)
-										.entity(initSessionResponse)
-										.location(location)
-										.header("Retry-After", ioPairingRetryAfter)
-										.header("Max-Retries", ioPairingMaxRetry)
-										.build());
-					}
-					else {
-						// use the tax code to retrieve the tc acceptance and save new card flags
-						return createSessionWithTaxCode(taxCode, commonHeader, createSessionRequest);
-					}
+		               URI location = URI.create("/sessions?pairingToken=" + pairingToken);
+		               Log.debugf("createSession - Output parameters: %s, %s", location, initSessionResponse);
+		               return Uni.createFrom().item(
+		                     Response
+		                           .status(Status.ACCEPTED)
+		                           .entity(initSessionResponse)
+		                           .location(location)
+		                           .header("Retry-After", ioPairingRetryAfter)
+		                           .header("Max-Retries", ioPairingMaxRetry)
+		                           .build());
+		            }
+		            else {
+		               // use the tax code to retrieve the tc acceptance and save new card flags
+		               return createSessionWithTaxCode(ctxTaxCode, commonHeader, createSessionRequest);
+		            }
 
-				});
+		         });
 
-	}
+		}
+
 
 	/**
 	 * Branch of the createSession Uni that initialize a session using the tax code (that can be the one received in request or recovered from the PM Wallet)
-	 * @param taxCode the tax code for which to initialize the session
+	 * @param ctxTaxCode the tax code for which to initialize the session wrapped in a context
 	 * @param commonHeader a set of mandatory headers
 	 * @param createSessionRequest the original request containing the tax code or the tokenized pan of the card
 	 * @return an {@link CreateSessionResponse} instance containing the outcome of session initialization
 	 */
-	private Uni<Response> createSessionWithTaxCode(String taxCode, CommonHeader commonHeader, CreateSessionRequest createSessionRequest) {
+	private Uni<Response> createSessionWithTaxCode(ItemWithContext<String> ctxTaxCode, CommonHeader commonHeader, CreateSessionRequest createSessionRequest) {
 
-		return Uni.createFrom().item(taxCode)
-			.attachContext()
+		return Uni.createFrom().item(ctxTaxCode)
 				.map(cTaxCode -> {
 					// create response and attach the context to it
 					// the resulting object will be passed and returned from all the Uni in the chain
@@ -172,7 +188,7 @@ public class SessionsResource {
 								return cResponse;
 							});
 				})
-				.chain(cResponse -> retrieveSettingAndStoreCard(createSessionRequest, cResponse))
+				.chain(ctxResponse -> retrieveSettingAndStoreCard(createSessionRequest, ctxResponse))
 				.chain(cResponse -> {
 					// generate the sessionId and store it in the redis cache
 					// then return the response to the caller
@@ -182,7 +198,7 @@ public class SessionsResource {
 					session.setTaxCode(cResponse.context().get(CONTEXT_TAX_CODE));
 					boolean hasAcceptedTermsAndConditions = Outcome.OK.toString().equals(cResponse.get().getOutcome());
 					session.setTermsAndConditionAccepted(hasAcceptedTermsAndConditions);
-					if (hasAcceptedTermsAndConditions) {
+					if (hasAcceptedTermsAndConditions && cResponse.context().contains(CONTEXT_SAVE_NEW_CARDS)) {
 						session.setSaveNewCards(cResponse.context().get(CONTEXT_SAVE_NEW_CARDS));
 					}
 
@@ -201,18 +217,27 @@ public class SessionsResource {
 							});
 				});
 	}
+	
 
 	/**
 	 * Branch of the createSession Uni that, if the user already accepted the terms and condition, retrieves the saveNewCards settings from the PM wallet.
 	 * If the tax code was passed in request returns the setting in the response, otherwise if the setting is true, try to save the card in the wallet
 	 * @param createSessionRequest the original request containing the tax code or the tokenized pan of the card
-	 * @param initSessionResponse the response to update and return to the upstream Uni
+	 * @param createSessionResponse the response to update and return to the upstream Uni
 	 * @return a new {@link Uni} that emits the updated createSessionResponse
 	 */
-	private Uni<ItemWithContext<CreateSessionResponse>> retrieveSettingAndStoreCard(CreateSessionRequest createSessionRequest, ItemWithContext<CreateSessionResponse> initSessionResponse) {
+	private Uni<ItemWithContext<CreateSessionResponse>>  retrieveSettingAndStoreCard(CreateSessionRequest createSessionRequest, ItemWithContext<CreateSessionResponse> createSessionResponse) {
 
-		if (Outcome.OK.toString().equals(initSessionResponse.get().getOutcome())) {
-			return Uni.createFrom().item(initSessionResponse)
+		String source = null;
+		if (createSessionResponse.context().contains(CONTEXT_SOURCE)) {
+			source = createSessionResponse.context().get(CONTEXT_SOURCE);
+		}
+		
+		if ((source == null ||
+				 source.equals(TaxCodeSource.EXTERNAL.name()))
+				&&
+				Outcome.OK.toString().equals(createSessionResponse.get().getOutcome())) {
+			return Uni.createFrom().item(createSessionResponse)
 					.chain(cResponse -> {
 						// retrieve saveNewCards flag from the PM wallet
 						Log.debugf("Calling PMWallet - retrieve saveNewCard flag - Input parameters: taxCode=%s", cResponse.context().get(CONTEXT_TAX_CODE).toString());
@@ -240,11 +265,12 @@ public class SessionsResource {
 						// asynch save of the card on the pm wallet
 						// this operation is only done if the pan was passed in request and the saveNewCard flag is configured to true
 						// we use call instead of chain because we don't
-						if (createSessionRequest.getPanToken() != null &&
-								(Boolean) cResponse.context().get(CONTEXT_SAVE_NEW_CARDS)) {
+						
+						if (createSessionRequest.getPanToken() != null && 
+								cResponse.context().getOrElse(CONTEXT_SAVE_NEW_CARDS, () -> Boolean.FALSE)) {
 							PresaveRequest card = new PresaveRequest();
 							card.setPanToken(createSessionRequest.getPanToken());
-							card.setTaxCode(cResponse.context().get(CONTEXT_TAX_CODE));
+							card.setTaxCode(createSessionResponse.context().get(CONTEXT_TAX_CODE));
 							Log.debugf("Calling PMWallet - saving new card - Input parameters: %s", card);
 							return pmWalletService.presave(card)
 									.onFailure().recoverWithItem(t -> {
@@ -258,7 +284,7 @@ public class SessionsResource {
 					});
 		}
 		else {
-			return Uni.createFrom().item(initSessionResponse);
+			return Uni.createFrom().item(createSessionResponse);
 		}
 	}
 

@@ -14,6 +14,8 @@ public final class SessionTestData {
     public final static String CF_LUIGI_VERDI = "VRDLGU80A01H501Q"; // tcCheck:404 (accepted but expired)
     public final static String CF_MARIO_BIANCHI = "BNCMRA80A01H501A"; // tcCheck:500
     public final static String CF_MARIA_BIANCHI = "BNCMRA80A41H501E"; // tcCheck:timeout
+    public final static String CF_FRANCO_ROSSI	= "RSSFNC80A01H501B";
+    public final static String CF_FRANCO_VERDI = "VRDMNC80A01H501X";
 
 
     public final static String PAN_MARIO_ROSSI = "a5069caab6a149008426508e1a966eeb"; // accepted, save cards, presave:204
@@ -27,6 +29,8 @@ public final class SessionTestData {
     public final static String PAN_LUIGI_VERDI = "a358c16d12114ae89f4c504818185c2a"; // tcCheck:404 (accepted but expired)
     public final static String PAN_MARIO_BIANCHI = "a2c52680f72745978ed2e991a86d86dd"; // tcCheck:500
     public final static String PAN_MARIA_BIANCHI = "a7e0eef15c3b445385ea531d66bde493"; // tcCheck:500
+    public final static String PAN_FRANCO_ROSSI = "a72a0cf5f141481aa33112adef17aaf8";
+    public final static String PAN_FRANCO_VERDI = "a10521013606448a8bc3fcc131726562";
 
 
     private SessionTestData() {

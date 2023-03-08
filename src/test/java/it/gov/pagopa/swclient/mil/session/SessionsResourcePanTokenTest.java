@@ -314,6 +314,7 @@ class SessionsResourcePanTokenTest {
 
 		RetrieveTaxCodeResponse retrieveTaxCodeResponse = new RetrieveTaxCodeResponse();
 		retrieveTaxCodeResponse.setTaxCode(SessionTestData.CF_MARIO_ROSSI);
+		retrieveTaxCodeResponse.setSource("EXTERNAL");
 
 		Mockito
 				.when(pmWalletService.retrieveTaxCode(SessionTestData.PAN_MARIO_ROSSI))
@@ -495,6 +496,7 @@ class SessionsResourcePanTokenTest {
 
 		RetrieveTaxCodeResponse retrieveTaxCodeResponse = new RetrieveTaxCodeResponse();
 		retrieveTaxCodeResponse.setTaxCode(SessionTestData.CF_MARIO_ROSSI);
+		retrieveTaxCodeResponse.setSource("EXTERNAL");
 
 		CheckResponse termsAndCondsKO = new CheckResponse();
 		termsAndCondsKO.setOutcome(Outcome.OK.toString());

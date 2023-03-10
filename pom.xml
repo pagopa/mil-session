@@ -17,6 +17,7 @@
 		
 		<compiler-plugin.version>3.8.1</compiler-plugin.version>
 		<surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
+		<sonar-plugin.version>3.9.1.2184</sonar-plugin.version>
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -28,6 +29,13 @@
 		<skipITs>true</skipITs>
 		
 		<common.version>1.0.3</common.version>
+		
+		<sonar.host.url>https://sonarcloud.io:443/</sonar.host.url>
+		<sonar.organization>pagopa</sonar.organization>
+		<sonar.projectKey>pagopa_mil-session</sonar.projectKey>
+		<sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+		<sonar.qualitygate.timeout>300</sonar.qualitygate.timeout>
+		<sonar.coverage.jacoco.xmlReportPaths>target/jacoco-report/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 	
 	<dependencyManagement>
@@ -89,6 +97,11 @@
 		<dependency>
 			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-junit5-mockito</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-jacoco</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -206,37 +219,36 @@
 			</properties>
 		</profile>
 	
+		<!-- To execute SCA with SonarCloud:                                      -->
+		<!--   1. export SONAR_TOKEN=<sonar token provided by PagoPA DevOps team> -->
+		<!--   2. mvn verify -Pvalidate                                       -->
 		<profile>
-			<id>coverage</id>
+			<id>validate</id>
+			<activation>
+				<property>
+					<name>validate</name>
+				</property>
+			</activation>
 			<build>
 				<plugins>
+					<!-- SCA with Sonar -->
 					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>0.8.8</version>
+						<groupId>org.sonarsource.scanner.maven</groupId>
+						<artifactId>sonar-maven-plugin</artifactId>
+						<version>${sonar-plugin.version}</version>
 						<executions>
 							<execution>
-								<id>prepare-agent</id>
+								<id>sca_with_sonar</id>
+								<!-- after test -->
+								<phase>test</phase>
 								<goals>
-									<goal>prepare-agent</goal>
+									<goal>sonar</goal>
 								</goals>
-							</execution>
-							<execution>
-								<id>report</id>
-								<goals>
-									<goal>report</goal>
-								</goals>
-								<configuration>
-									<formats>
-										<format>XML</format>
-									</formats>
-								</configuration>
 							</execution>
 						</executions>
 					</plugin>
 				</plugins>
 			</build>
 		</profile>
-		
 	</profiles>
 </project>

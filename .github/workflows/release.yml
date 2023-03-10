@@ -60,12 +60,19 @@ jobs:
       - name: Update of pom.xml with the new version + Git add + commit + push of the updated pom.xml
         if: steps.semantic.outputs.new_release_published == 'true'
         run: |
-          mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }}
+          mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }} --no-transfer-progress
           git config user.name "GitHub Workflow"
           git config user.email "<>"
           git add pom.xml
           git commit -m "pom.xml updated with new version ${{ steps.semantic.outputs.new_release_version }}"
           git push origin main
+
+      #
+      # Sleep for 60s to avoid this issue: https://github.com/semantic-release/semantic-release/issues/2204
+      #
+      - name: Sleep for 60s to avoid the issue 2204
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: sleep 60s
 
       #
       # Calculation of the new version (again) with tagging + releasing + etc.
@@ -84,14 +91,20 @@ jobs:
           dry_run: false
 
       #
-      # Build dependencies + Build native image + Docker build + login + push.
+      # Build dependencies + Execute unit-test + Calculate test coverage + SCA with Sonar + Build native image + Docker build + Docker login + Docker push
       #
-      - name: Build dependencies + Build native image + Docker build + login + push
+      - name: Build dependencies + Execute unit-test + Calculate test coverage + SCA with Sonar + Build native image + Docker build + Docker login + Docker push
         if: steps.semantic.outputs.new_release_published == 'true'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn clean validate -Pbootstrap
-          mvn clean package -Pnative
+          mvn clean validate -Pbootstrap --no-transfer-progress
+          mvn verify -Pvalidate --no-transfer-progress
+          mvn clean package -Pnative -Dmaven.test.skip=true --no-transfer-progress
           docker build -f src/main/docker/Dockerfile.native-micro -t ghcr.io/${{ github.repository }}:latest -t ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }} .
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push -a ghcr.io/${{ github.repository }}
 
+      # TODO: Deploy in DEV
+      # TODO: Run Integration Test
+      # TODO: Run Performance Test

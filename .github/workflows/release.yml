@@ -22,7 +22,7 @@ jobs:
       # Checkout the source code.
       #
       - name: Checkout the source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           token: ${{ secrets.GIT_PAT }}
           fetch-depth: 0
@@ -48,7 +48,7 @@ jobs:
       #
       - name: Setup the JDK
         if: steps.semantic.outputs.new_release_published == 'true'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3
         with:
           java-version: '17'
           distribution: 'temurin'
